@@ -1,0 +1,12 @@
+---
+downloads: ~/.ansible-dl/
+
+configure_dotfiles: yes
+configure_sudoers:  yes
+configure_terminal: yes
+
+dotfiles_repo:                   https://github.com/benschau/dotfiles
+dotfiles_repo_accept_hostkey:    yes
+dotfiles_repo_local_destination: ~/.dotfiles
+dotfiles_files:
+    - .vimrc

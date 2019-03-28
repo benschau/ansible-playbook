@@ -1,0 +1,69 @@
+---
+# ============================================
+# Generic
+# ============================================
+- name: "Generic | Get $HOME"
+  shell: "echo $HOME"
+  register: shell_home_dir
+  changed_when: false
+  when: user_dir is not defined
+
+- name: "Generic | Set $HOME"
+  set_fact:
+    user_dir: "{{ shell_home_dir.stdout }}"
+  when: user_dir is not defined
+
+# ============================================
+# Ansible 
+# shamelessly borrowing from geerlingguy
+# ============================================
+- name: "Ansible | Check downloads dir"
+  file:
+      path:  "{{ downloads }}"
+      state: directory
+
+- name: "Ansible | Check /etc/ansible dir"
+  file:
+      path:  "/etc/ansible"
+      state: directory
+  become: yes
+
+- name: "Ansible | Symlink /usr/local/etc/ansible to /etc/ansible"
+  file:
+      src:   /etc/ansible
+      path:  /usr/local/etc/ansible
+      state: link
+
+# ============================================
+# Rust 
+# ============================================
+- name: "Rust | Check gcc" 
+  shell: which gcc
+  register: rust_which_gcc
+  changed_when: false
+  failed_when: false
+
+- name: "Rust | Check cURL" 
+  shell: which cURL
+  register: rust_which_curl
+  changed_when: false
+  failed_when: false
+
+- name: "Rust | Perform OS-specific tasks (Arch Linux)"
+  include_tasks: "os/archlinux.yml"
+  when:
+      - ansible_facts['distribution'] == "Archlinux" 
+      - rust_which_curl.stdout.find('curl') == -1 or rust_which_gcc.stdout.find('gcc') == -1
+
+- name: "Rust | Perform OS-specific tasks (Fedora)"
+  include_tasks: "os/fedora.yml"
+  when:
+      - ansible_facts['distribution'] == "Fedora" 
+      - rust_which_curl.stdout.find('curl') == -1 or rust_which_gcc.stdout.find('gcc') == -1
+
+- name: "Rust | Append shell exports"
+  set_fact:
+    shell_exports:
+      - regex: 'export PATH="\$PATH:{{ user_dir }}/.cargo/bin"'
+        lineinfile: 'export PATH="$PATH:{{ user_dir }}/.cargo/bin"'
+  when: shell_exports is not defined

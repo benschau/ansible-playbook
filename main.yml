@@ -1,0 +1,24 @@
+---
+- hosts: all
+  connection: local
+
+  vars_files:
+      - ./vars/default.yml 
+
+  roles:
+      - role: benschau.dotfiles
+        when: configure_dotfiles
+        tags: ['dotfiles']
+
+  tasks:
+      - include_tasks: tasks/setup.yml
+
+      - include_tasks: tasks/sudoers.yml
+        when:          configure_sudoers
+
+      - include_tasks: tasks/terminal.yml
+        when:          configure_terminal
+
+      - include_tasks: tasks/extras.yml
+        when:          configure_extras
+        tags:          ['extras']
